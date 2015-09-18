@@ -1,7 +1,7 @@
 var express = require('express');
 var app = express();
 var mongoClient = require('mongodb').MongoClient;
-var port = 8080;
+var port = 9876;
 var http = require('http');
 var host = "127.0.0.1";
 var mongoPort = "27017";
@@ -12,9 +12,8 @@ var multer = require('multer');
 
 app.use(bodyParser.json()); // for parsing application/json
 app.use(bodyParser.urlencoded({ extended: true })); // for parsing application/x-www-form-urlencoded
-//app.use(multer({dest:'./uploads/'}).single('upload')); // for parsing multipart/form-data
 
-function parseQueryParams(urlQueryParams, callback) { // callback
+function parseQueryParams(urlQueryParams, callback) { // parses query parameters
 	var mongoQuery = {};
 	
 	console.log(JSON.stringify(urlQueryParams));
@@ -71,46 +70,94 @@ function parseQueryParams(urlQueryParams, callback) { // callback
 	callback(null, mongoQuery);
 }
 
-
-app.get('/kki42', function(req, res) {
-	//Sub Number,SubjectID,Group,Fiducial,Age,Sex,Subject Code,_id
-	// if want to do age range, can either do ?ageRange=12,15
-	var query;
+app.get('/collection/:coll_name/delete/:id/', function(req, res) {
+	// this api takes an id of a record of a particular collection and deletes it
+	var collName = req.params.coll_name;
+	var idVal = parseInt(req.params.id);
+	var rowQuery = {};
+	rowQuery['_id'] = idVal;
 	
-	parseQueryParams(req.query, function(err, params) {
-		query = params;
-		console.log(params);
+	console.log(rowQuery);
 	
-	});
-	
-	console.log("yay, this is the subject information API!");
-
 	mongoClient.connect(connectionString, function(err,db) {
-
-		if(err) {
-			callback(err,null);
-		}
-		var collName = "kki42";	
-
-		db.collection(collName).find(query).toArray(function(err, results) {
-			if(err) {
-				res.send("Sorry, this result cannot be found!");
-				res.end();
+		db.collection(collName).remove(rowQuery, function(err) {
+			if (err) {
+				res.sendStatus(404);
+				res.end();			
 			}
 			else {
-				res.setHeader('Content-Type', 'application/json');
-				res.send(results);
+				res.sendStatus(200);
 				res.end();
-				db.close();
 			}
-		}); // end of collection connection
-	}); // end of db connection
+			db.close();
+		});
+	});
+	
+});
 
+app.get('/collection/:coll_name/unset/:id/:field_name', function(req, res) {
+	// this api takes a record with a particular id (:id) from a collection (:coll_name) and removes a particular field (:field_name)
+	var collName = req.params.coll_name;
+	var idVal = parseInt(req.params.id);
+	var fieldToSet = req.params.field_name;
+	var rowQuery = {};
+	rowQuery['_id'] = idVal;
+	var updateQuery = {};
+	updateQuery[fieldToSet] = "";
+	
+	console.log(collName);
+	console.log(rowQuery);
+	console.log(updateQuery);
+	
+	mongoClient.connect(connectionString, function(err,db) {
+		db.collection(collName).update(rowQuery,{$unset:updateQuery}, function(err) {
+			if (err) {
+				res.sendStatus(404);
+				res.end();			
+			}
+			else {
+				res.sendStatus(200);
+				res.end();
+			}
+			db.close();
+		});
+	});
+	
+});
+
+app.get('/collection/:coll_name/set/:id/:field_name', function(req, res) {
+	// this api takes a record with a particular id (:id) from a collection (:coll_name) and removes a particular field (:field_name)
+	var collName = req.params.coll_name;
+	var idVal = parseInt(req.params.id);
+	var fieldToSet = req.params.field_name;
+	var valueToSet = req.query.value;
+	var rowQuery = {};
+	rowQuery['_id'] = idVal;
+	var updateQuery = {};
+	updateQuery[fieldToSet] = valueToSet;
+	
+	console.log(collName);
+	console.log(rowQuery);
+	console.log(updateQuery);
+	
+	mongoClient.connect(connectionString, function(err,db) {
+		db.collection(collName).update(rowQuery,{$set:updateQuery}, function(err) {
+			if (err) {
+				res.sendStatus(404);
+				res.end();			
+			}
+			else {
+				res.sendStatus(200);
+				res.end();
+			}
+			db.close();
+		});
+	});
+	
 });
 
 app.get('/collection/:coll_name', function(req, res) {
-	//Sub Number,SubjectID,Group,Fiducial,Age,Sex,Subject Code,_id
-	// if want to do age range, can either do ?ageRange=12,15
+	// this api returns all records contained in a particular collection
 	var collName = req.params.coll_name;
 	var query;
 	
@@ -143,9 +190,8 @@ app.get('/collection/:coll_name', function(req, res) {
 
 });
 
-
-// check to see if a field exists in a collection, if so, return it
 app.get('/collection/:coll_name/exists/:field_name', function(req, res) {
+	// check to see if a field exists in a particular collection, if so, return it
 	var collName = req.params.coll_name;
 	var fieldName = req.params.field_name;
 	var query = {};
@@ -178,67 +224,8 @@ app.get('/collection/:coll_name/exists/:field_name', function(req, res) {
 
 });
 
-app.post('/lims/:project_name', function(req, res) {
-	var json = req.body;
-	var projName = req.params.project_name;
-
-	json.project_name = projName;
-
-	console.log("woo, this is the post API! Your project name is: " + projName);
-	console.log(req.body.Author);
-	mongoClient.connect(connectionString, function(err,db) {
-
-		if(err) {
-			callback(err,null);
-		}
-
-		db.collection('channels').insert(json, function(err, results) {
-			if(err) {
-				res.send("Sorry, you done messed up!");
-				res.end();
-			}
-			else {
-				res.setHeader('Content-Type', 'application/json');
-				res.send(results);
-				res.end();
-				db.close();
-			}
-		}); // end of collection connection
-	}); // end of db connection
-
-});
-
-app.get('/lims/:project_name', function(req, res) {
-	var projName = req.params.project_name;
-	console.log("woo, this is the post API!");
-	
-	var query = {};
-	query.project_name = projName;
-	
-	mongoClient.connect(connectionString, function(err,db) {
-
-		if(err) {
-			callback(err,null);
-		}
-
-		db.collection('channels').find(query).toArray(function(err, results) {
-			if(err) {
-				res.send("Sorry, you done messed up!");
-				res.end();
-			}
-			else {
-				res.setHeader('Content-Type', 'application/json');
-				res.send(results);
-				res.end();
-			}
-		}); // end of collection connection
-	}); // end of db connection
-
-});
-
-
-// get subject info by subject number
 app.get('/collection/:coll_name/subnum/:subj_num', function(req, res) {
+	// this api gets all metadata from a particular collection belonging to a particular subject number
 	console.log("yay, this is the specific subject information API!");
 	var collName = req.params.coll_name;
 	var sub_num = req.params.subj_num;
@@ -264,6 +251,100 @@ app.get('/collection/:coll_name/subnum/:subj_num', function(req, res) {
 				res.send(results);
 				res.end();
 				db.close();
+			}
+		}); // end of collection connection
+	}); // end of db connection
+
+});
+
+app.post('/lims/:project_name', function(req, res) {
+	// this api accepts JSON and inserts it into the db with corresponding project name
+	var json = req.body;
+	var projName = req.params.project_name;
+
+	json.project_name = projName;
+
+	console.log("woo, this is the post API! Your project name is: " + projName);
+	console.log(req.body.Author);
+	mongoClient.connect(connectionString, function(err,db) {
+
+		if(err) {
+			callback(err,null);
+		}
+
+		db.collection('channels').insert(json, function(err, results) {
+			if(err) {
+				res.send("Sorry, your data is in the wrong format!");
+				res.end();
+			}
+			else {
+				res.setHeader('Content-Type', 'application/json');
+				res.send(results);
+				res.end();
+				db.close();
+			}
+		}); // end of collection connection
+	}); // end of db connection
+
+});
+
+app.post('/lims/:token/:channel', function(req, res) {
+	// this api accepts JSON and inserts it into the db
+	var json = req.body;
+	var token = req.params.token;
+	var channel = req.params.channel;
+	var collName = "test";
+	console.log("woo, this is the post API!");
+
+	console.log(json);
+	
+	mongoClient.connect(connectionString, function(err,db) {
+
+		if(err) {
+			callback(err,null);
+		}
+
+		db.collection(collName).insert(json, function(err, results) {
+			if(err) {
+				res.send("Sorry, your stuff isn't in the right format!");
+				res.end();
+			}
+			else {
+				res.setHeader('Content-Type', 'application/json');
+				res.send(results);
+				res.end();
+				db.close();
+			}
+		}); // end of collection connection
+	}); // end of db connection
+
+});
+
+app.get('/lims/:token/:channel_name', function(req, res) {
+	// this api gets all metadata corresponding to a particular token and channel name
+	var token = req.params.token;
+	var chanName = req.params.channel_name;
+	console.log("woo, this is the post API!");
+	
+	var query = {};
+	query.name = chanName;
+	query.tokens = token;
+	
+	mongoClient.connect(connectionString, function(err,db) {
+
+		if(err) {
+			callback(err,null);
+		}
+
+		db.collection('channels').find(query).toArray(function(err, results) {
+			if(err) {
+				res.send("Sorry, you done messed up!");
+				res.end();
+			}
+			else {
+				res.setHeader('Content-Type', 'application/json');
+				res.send(results);
+				res.end();
 			}
 		}); // end of collection connection
 	}); // end of db connection
