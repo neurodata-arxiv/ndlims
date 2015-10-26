@@ -25,8 +25,9 @@
  | Code | Message | Meaning |
  |------|---------|---------|
  | 200  | `[id]`  | Successful `set` performed. (`id` of the upserted object is returned.) |
- | 500  | `Metadata for token [token] already exists.` | This data already exists and cannot be edited because no `secret` was defined. |
- | 500  | `Metadata for token [token] already exists with a defined secret.` | This data already exists, and the `secret` you specified in your request didn't match the `secret` required to edit the datum. |
+ | 500  | `Metadata for token [token] is read-only.` | This data already exists and cannot be edited because no `secret` was defined. |
+ | 500  | `Metadata for token [token] cannot be updated: Bad secret.` | This data already exists, and the `secret` you specified in your request didn't match the `secret` required to edit the datum. |
+ | 500  | `Metadata for token [token] could not be inserted.` | Unknown database error. |
 
 - `GET /metadata/ocp/get/:token`
   Get the JSON metadata associated with a token.
