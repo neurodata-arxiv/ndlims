@@ -1,15 +1,19 @@
 
 # Endpoints:
 - `POST /metadata/ocp/set/:token`
-  **Post JSON (from the request `data`).** Even if `token` is set in the data, *ocpmeta will use the URL-specified token.*
 
-  **Errors:**
+ **Post JSON (from the request `data`).** Even if `token` is set in the data, *ocpmeta will use the URL-specified token.*
+ 
+ If you don't specify a `secret` in your POST request, this data will be read-only. In order to edit your data, you must specify a `secret`. (One of the keys in your metadata should be `secret`, and its value can be any string that you'll remember. Anyone with this `secret` can edit the entry.
+ 
 
-  | Code | Message | Meaning |
-  |------|---------|---------|
-  | 200  | `[id]`  | Successful `set` performed. (`id` of the upserted object is returned.) |
-  | 500  | `Metadata for token [token] already exists.` | This data already exists and cannot be edited because no `secret` was defined. |
-  | 500  | `Metadata for token [token] already exists with a defined secret.` | This data already exists, and the `secret` you specified in your request didn't match the `secret` required to edit the datum. |
+ **Responses:**
+
+ | Code | Message | Meaning |
+ |------|---------|---------|
+ | 200  | `[id]`  | Successful `set` performed. (`id` of the upserted object is returned.) |
+ | 500  | `Metadata for token [token] already exists.` | This data already exists and cannot be edited because no `secret` was defined. |
+ | 500  | `Metadata for token [token] already exists with a defined secret.` | This data already exists, and the `secret` you specified in your request didn't match the `secret` required to edit the datum. |
 
 - `GET /metadata/ocp/get/:token`
   Get the JSON metadata associated with a token.
