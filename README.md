@@ -1,7 +1,16 @@
 
 # Endpoints:
 - `POST /metadata/ocp/set/:token`
-  Post JSON (from the request `data`). If `token` is set in the data, *it will be overwritten by the URL-specified token.*
+  **Post JSON (from the request `data`).** Even if `token` is set in the data, *ocpmeta will use the URL-specified token.*
+
+  **Errors:**
+
+  | Code | Message | Meaning |
+  |------|---------|---------|
+  | 200  | `[id]`  | Successful `set` performed. (`id` of the upserted object is returned.) |
+  | 500  | `Metadata for token [token] already exists.` | This data already exists and cannot be edited because no `secret` was defined. |
+  | 500  | `Metadata for token [token] already exists with a defined secret.` | This data already exists, and the `secret` you specified in your request didn't match the `secret` required to edit the datum. |
+
 - `GET /metadata/ocp/get/:token`
   Get the JSON metadata associated with a token.
 
