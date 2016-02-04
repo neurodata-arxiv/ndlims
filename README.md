@@ -44,12 +44,12 @@
 
 # Setup
 
-Full setup from scratch, to running this service (on Ubuntu):
+Full setup from scratch, to running this service as a development server (on Ubuntu):
 
 ```
 sudo apt-get install nodejs
-wget https://install.meteor.com | sh
-git clone git@github.com:j6k4m8/ocpmeta.git ocpmeta
-cd ocpmeta
+curl https://install.meteor.com | sh
+git clone git@github.com:openconnectome/ndlims.git ndlims
+cd ndlims
 meteor --port=3030
 ```
